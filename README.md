@@ -6,9 +6,9 @@
 
 ## How-to
 ### Starting up server
-1. Access to docker folder and adapt docker-compose.yml to your needs.
-2. *(Optional)* Add the patch into docker/liferay/patching
-3. docker-compose up
+1. Adapt **docker-compose.yml** to your needs.
+2. *(Optional)* Add the patch into **docker/liferay/patching**
+3. `docker-compose up`
 
 ### Running Tests
 1. Adapt **playwright.config.ts** if needed.
