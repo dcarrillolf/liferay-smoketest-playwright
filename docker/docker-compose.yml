@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+# LIFERAY #
+  qa-liferay:
+    image: ${LIFERAY_IMG:-liferay/dxp:2024.q1.1}
+    container_name: qa-liferay
+    environment:      
+      LIFERAY_DISABLE_TRIAL_LICENSE: "true"
+      LIFERAY_JVM_OPTS: "-Xms2560m -Xmx4096m"
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: com.mysql.cj.jdbc.Driver
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:mysql://database:3306/lportal
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: lportal
+      LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: lportal
+      LIFERAY_UPGRADE_PERIOD_DATABASE_PERIOD_AUTO_PERIOD_RUN: "false"
+      LIFERAY_COMPANY_PERIOD_SECURITY_PERIOD_UPDATE_PERIOD_PASSWORD_PERIOD_REQUIRED: "false"
+      LIFERAY_PASSWORDS_PERIOD_DEFAULT_PERIOD_POLICY_PERIOD_CHANGE_PERIOD_REQUIRED: "false"
+      LIFERAY_USERS_PERIOD_REMINDER_PERIOD_QUERIES_PERIOD_CUSTOM_PERIOD_QUESTION_PERIOD_ENABLED: "false"
+      LIFERAY_TERMS_PERIOD_OF_PERIOD_USE_PERIOD_REQUIRED: "false"
+      LIFERAY_ENTERPRISE_PERIOD_PRODUCT_PERIOD_NOTIFICATION_PERIOD_ENABLED: "false"
+    ports:
+      - 18080:8080
+#      - 18000:8000
+#      - 22322:11311 
+#      - 19201:9201 # Elasticsearch, 7.0-7.2 -> 9200, 7.3+ -> 9201
+    volumes:
+      - ./liferay:/mnt/liferay
+      - ./logs:/opt/liferay/logs
+#      - ./liferay/scripts:/usr/local/liferay/scripts
+#      - ./liferay/data:/opt/liferay/data
+    links:
+      - "qa-db:database"
+    depends_on:
+      qa-db:
+         condition: service_healthy
+
+# MYSQL #
+  qa-db:
+    container_name: qa-db
+#    user: "1000:1000"
+    image: mysql:8.0.34
+    command: --lower_case_table_names=1
+    environment:
+      - MYSQL_ROOT_PASSWORD=toor
+      - MYSQL_DATABASE=lportal
+      - MYSQL_USER=lportal
+      - MYSQL_PASSWORD=lportal
+      - character-set-server=utf8
+      - collation-server=utf8_unicode_ci
+    stdin_open: true
+    tty: true
+    healthcheck:
+       test: ["CMD", 'mysqladmin', 'ping', '-h', 'localhost', '-u', '$$MYSQL_USER', '-p$$MYSQL_ROOT_PASSWORD' ]
+       timeout: 5s
+       retries: 12
+    ports:
+      - "13306:3306"
+#    volumes:
+#      - ./mysql:/var/lib/mysql
