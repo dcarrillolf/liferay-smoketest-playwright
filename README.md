@@ -1,0 +1,1 @@
+# liferay-smoketest-playwright
