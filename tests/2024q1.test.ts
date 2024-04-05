@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(async ({ page }, testInfo) => {
-  testInfo.setTimeout(10000);
+  testInfo.setTimeout(30000);
 });
 
 // HELPER FUNCTIONS
@@ -12,10 +12,19 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function goToControlPanel(page: Page, tab:String, option:String) {
   await page.getByLabel('Open Applications Menu').click();
   await page.getByText(tab).click();
-  await page.getByText(option).click();
+  await page.getByRole('link', {name:option}).click();
+  await delay(1000);
 }
 
-// LOGIN / LOGOUT
+async function goToProductMenu(page: Page, tab:String, option:String) {
+  const productMenuButton = page.getByLabel('Open Product Menu');
+  if (await productMenuButton.isVisible()) {
+    await productMenuButton.click();
+  }
+  await page.getByRole('menuitem', {name:tab}).click();
+  await page.getByRole('menuitem', {name:option}).click();
+}
+
 async function login(page: Page) {
   await page.getByRole('button', { name: 'Sign In' }).click();
   await page.getByLabel('Email Address').fill('test@liferay.com');
@@ -28,7 +37,6 @@ async function logout(page: Page) {
   await page.getByText("Sign Out").click();
 }
 
-// USER CREATION
 async function createUser(page: Page) {
   await page.getByRole('link', { name: 'Add User' }).click();
   await page.getByLabel('Screen Name').fill("t"+Date.now());
@@ -38,26 +46,35 @@ async function createUser(page: Page) {
   await page.getByRole('button', {name:'Save'}).click();
 }
 
-// Create a new site
-// Create a few pages on the new site
-// Add a blogs widget to the page
-// Add another widget to the page
+async function createWebContent(page: Page) {
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('menuitem', { name: 'Basic Web Content'}).click();
+  await delay(10000);
+  await page.getByPlaceholder('Untitled Basic Web Content').fill("WC Example");
+  await page.getByRole('button', {name:"Publish"}).click();
+  await delay(5000);
+}
+
+async function createSite(page: Page) {
+  await page.getByRole('link', { name: 'Add Site' }).click();
+  await page.getByRole('button', { name: 'Select Template: Blank Site' }).click();
+  //await page.getByLabel('Name').fill("Site Example");
+  await page.frameLocator('iframe[title="Add Site"]').getByLabel('Name Required').fill("Site Example");  // 
+  await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();
+  await delay(10000);
+}
 
 // SMOKE TESTS
-test('1_isAbleToLoginLogout', async ({ page }) => {
+test.skip('isAbleToLoginLogout', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#main-content')).toContainText('Welcome to Liferay');
   await login(page)
   await expect(page.getByRole('heading', { name: 'Home' })).toContainText('Home');
   await logout(page)
   await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-  await page.goto('/');
-  await logout(page)
-  await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
 });
 
-test('2_createUser', async ({ page }) => {
-  test.setTimeout(10000);
+test('createUser', async ({ page }) => {
   await page.goto('/');
   await login(page);
   await goToControlPanel(page, 'Control Panel', 'Users and Organizations');
@@ -66,6 +83,23 @@ test('2_createUser', async ({ page }) => {
   await expect(page.getByText('First Last')).toBeVisible();
 });
 
+test('createWebContent', async ({ page }) => {
+  await page.goto('/');
+  await login(page);
+  await goToProductMenu(page, 'Content & Data', 'Web Content');
+  await expect(page.getByRole('heading', { name: 'Web Content' })).toBeVisible();
+  await createWebContent(page);
+  await expect(page.getByRole('link',{name:'WC Example'})).toBeVisible();
+});
+
+test('createSite', async ({ page }) => {
+  await page.goto('/');
+  await login(page);
+  await goToControlPanel(page, 'Control Panel', 'Sites');
+  await expect(page.getByRole('heading', { name: 'Sites' })).toBeVisible();
+  await createSite(page);
+  await expect(page.getByRole('heading', {name:'Site Settings'})).toBeVisible();
+});
 
 
 

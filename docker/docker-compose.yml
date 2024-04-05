@@ -3,7 +3,7 @@ version: '3.9'
 services:
 # LIFERAY #
   qa-liferay:
-    image: ${LIFERAY_IMG:-liferay/dxp:2024.q1.1}
+    image: ${IMAGE_LIFERAY:-liferay/dxp:2024.q1.1}
     container_name: qa-liferay
     environment:      
       LIFERAY_DISABLE_TRIAL_LICENSE: "true"
