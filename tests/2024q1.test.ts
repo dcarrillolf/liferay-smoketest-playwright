@@ -11,7 +11,7 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function goToControlPanel(page: Page, tab:String, option:String) {
   await page.getByLabel('Open Applications Menu').click();
   await page.getByRole('tab', { name: tab , exact: true }).click();
-  await page.getByRole('menuitem', { name: option, exact: true }).click();
+  await page.getByRole('menuitem', { name: option }).click();
 
 }
 
@@ -68,9 +68,9 @@ async function createSite(page: Page) {
   await page.getByRole('link', { name: 'Add Site' }).click();
   await page.getByRole('button', { name: 'Select Template: Blank Site' }).click();
   //await page.getByLabel('Name').fill("Site Example");
-  await page.frameLocator('iframe[title="Add Site"]').getByLabel('Name Required').fill("Site "+Date.now());
-  await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();
-  await delay(3000); 
+  await page.frameLocator('iframe[title="Add Site"]').getByLabel('Name Required').fill("Site"+Date.now());
+  await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();  // Random error at this point
+  await delay(5000);
 }
 
 async function createLayout(page: Page) {
