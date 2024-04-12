@@ -8,14 +8,13 @@ test.beforeEach(async ({ page }, testInfo) => {
 // HELPER FUNCTIONS
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-async function goToControlPanel(page: Page, tab:String, option:String) {
+async function goToControlPanel(page: Page, tab:string, option:string) {
   await page.getByLabel('Open Applications Menu').click();
   await page.getByRole('tab', { name: tab , exact: true }).click();
   await page.getByRole('menuitem', { name: option }).click();
-
 }
 
-async function goToProductMenu(page: Page, tab:String, option:String) {
+async function goToProductMenu(page: Page, tab:string, option:string) {
   const openProductMenu = page.getByRole('tab', {name:'Open Product Menu'});
   await openProductMenu.waitFor({timeout: 5000}).then(() => {openProductMenu.click();}).catch(() => {});
   await page.getByRole('menuitem', {name:tab}).click();
@@ -59,7 +58,7 @@ async function createBlogEntry(page: Page) {
   await page.getByPlaceholder('Title *').fill("Example Title"+Date.now());
   await page.getByPlaceholder('Subtitle').fill("Example Subtitle"+Date.now());
   const contentLocator = page.locator('[id="_com_liferay_blogs_web_portlet_BlogsAdminPortlet_contentEditor"]');
-  await contentLocator.click()
+  await contentLocator.click();
   await contentLocator.type("Example Content"+Date.now());
   await page.getByRole('button', {name:"Publish"}).click();
 }
@@ -67,31 +66,24 @@ async function createBlogEntry(page: Page) {
 async function createSite(page: Page) {
   await page.getByRole('link', { name: 'Add Site' }).click();
   await page.getByRole('button', { name: 'Select Template: Blank Site' }).click();
-  //await page.getByLabel('Name').fill("Site Example");
   await page.frameLocator('iframe[title="Add Site"]').getByLabel('Name Required').fill("Site"+Date.now());
   await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();  // Random error at this point
-  await delay(5000);
 }
 
-async function createLayout(page: Page) {
+async function createLayoutWithBlogPortlet(page: Page) {
   await page.getByRole('button', { name: 'New' }).first().click();
   await page.getByRole('menuitem', { name: 'Page', exact: true }).click();
   await page.getByRole('button', { name: 'Blank' }).click();
-  await page.frameLocator('iframe[title="Add Page"]').getByPlaceholder('Add Page Name').fill("Page "+Date.now());
+  await page.frameLocator('iframe[title="Add Page"]').getByPlaceholder('Add Page Name').fill("CustomPage "+Date.now());
   await page.frameLocator('iframe[title="Add Page"]').getByRole('button', { name: 'Add' }).click();
+  await delay(3000);
+  await page.getByLabel('Search Fragments and Widgets').fill('blogs');
+  await page.getByRole('menuitem', { name: 'Blogs Add Blogs' }).first().dragTo(page.getByText('Place fragments or widgets'));
+  await delay(3000);
   await page.getByRole('button', {name:"Publish"}).click();
 }
 
 // TESTS
-test('isAbleToLoginLogout', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.locator('#main-content')).toContainText('Welcome to Liferay');
-  await login(page)
-  await expect(page.getByRole('heading', { name: 'Home' })).toContainText('Home');
-  await logout(page)
-  await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-});
-
 test('createWebContent', async ({ page }) => {
   await page.goto('/');
   await login(page);
@@ -101,12 +93,12 @@ test('createWebContent', async ({ page }) => {
   await expect(page.getByText('Success')).toBeVisible();
 });
 
-test('createLayout',  async ({ page }) => {
+test('createLayoutWithBlogPortlet',  async ({ page }) => {
   await page.goto('/');
   await login(page);
   await goToProductMenu(page, 'Site Builder', 'Pages');
   await expect(page.getByRole('heading', { name: 'Pages', exact: true })).toBeVisible();
-  await createLayout(page);
+  await createLayoutWithBlogPortlet(page);
   await expect(page.getByText('Success')).toBeVisible();  
 });
 
@@ -120,11 +112,21 @@ test('createBlogEntry', async ({ page }) => {
 });
 
 // Smoke Tests
+test.only('isAbleToLoginLogout', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#main-content')).toContainText('Welcome to Liferay');
+  await login(page)
+  await expect(page.getByRole('heading', { name: 'Home' })).toContainText('Home');
+  await logout(page)
+  await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+});
+
+
 test.only('createUser', async ({ page }) => {
   await page.goto('/');
   await login(page);
   await goToControlPanel(page, 'Control Panel', 'Users and Organizations');
-  await expect(page.getByRole('heading', { name: 'Users and Organizations' })).toBeVisible();
+  await expect(page).toHaveTitle(new RegExp('Users and Organizations'));
   await createUser(page);
   await expect(page.getByText('Success')).toBeVisible();
 });
@@ -135,28 +137,25 @@ test.only('createSiteWithContent', async ({ page }) => {
   
   // SITE
   await goToControlPanel(page, 'Control Panel', 'Sites');
-  await expect(page.getByRole('link', { name: 'Global' })).toBeVisible();
+  await expect(page.locator('h2.applications-menu-sites-label')).toBeVisible();
   await createSite(page);
   await expect(page.getByText('Success')).toBeVisible();
   
   // LAYOUT
   await goToProductMenu(page, 'Site Builder', 'Pages');
-  await expect(page.getByRole('heading', { name: 'Pages' , exact: true })).toBeVisible();
-  await createLayout(page);
+  await expect(page).toHaveTitle(new RegExp('Pages'));
+  await createLayoutWithBlogPortlet(page);
   await expect(page.getByText('Success')).toBeVisible();
   
   // WEB CONTENT
   await goToProductMenu(page, 'Content & Data', 'Web Content');
-  await expect(page.getByRole('heading', { name: 'Web Content' })).toBeVisible();
+  await expect(page).toHaveTitle(new RegExp('Web Content'));
   await createWebContent(page);
   await expect(page.getByText('Success')).toBeVisible();
   
   // BLOG ENTRY
   await goToProductMenu(page, 'Content & Data', 'Blogs');
-  await expect(page.getByRole('heading', { name: 'Blogs' })).toBeVisible();
+  await expect(page).toHaveTitle(new RegExp('Blogs'));
   await createBlogEntry(page);
   await expect(page.getByText('Success')).toBeVisible();
 });
-
-
-
