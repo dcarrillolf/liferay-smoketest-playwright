@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(async ({ page }, testInfo) => {
-  testInfo.setTimeout(30000);
+  testInfo.setTimeout(120000);
 });
 
 // HELPER FUNCTIONS
@@ -67,7 +67,8 @@ async function createSite(page: Page) {
   await page.getByRole('link', { name: 'Add Site' }).click();
   await page.getByRole('button', { name: 'Select Template: Blank Site' }).click();
   await page.frameLocator('iframe[title="Add Site"]').getByLabel('Name Required').fill("Site"+Date.now());
-  await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();  // Random error at this point
+  await page.frameLocator('iframe[title="Add Site"]').getByRole('button', { name: 'Add' }).click();  // Random error at this point the first time
+  await delay(5000);
 }
 
 async function createLayoutWithBlogPortlet(page: Page) {
